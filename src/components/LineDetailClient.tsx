@@ -90,6 +90,7 @@ function MachineCard({
   canEditMachineStates,
   productionDate,
 }: MachineWithData & { canEditMachineStates: boolean; productionDate: string }) {
+  const { t } = useLanguage()
   const router = useRouter()
   const [enabled, setEnabled] = useState(machine.enabled)
   const [loading, setLoading] = useState(false)
