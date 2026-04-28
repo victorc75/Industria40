@@ -1,103 +1,82 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { ensureProfileAndOrg, getLines, getKpiHistoryForLine, getLatestKpisForLines, getLineKpisFromEnabledMachines, updateOrganizationPlan } from '@/lib/db/queries'
+import { DashboardClient } from '@/components/DashboardClient'
+import type { PlanId } from '@/lib/types'
+import type { KpiHistoryPoint } from '@/lib/types'
 
-import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, LayoutDashboard } from 'lucide-react'
-import { PLANS, type PlanId } from '@/lib/types'
-import { getKpiHistory, getLinesKpis } from '@/lib/mockData'
-import { KpiCard } from '@/components/KpiCard'
-import { OeeChart } from '@/components/OeeChart'
-import { LinesBarChart } from '@/components/LinesBarChart'
-import { Gauge, Activity, TrendingUp, Award } from 'lucide-react'
+const VALID_PLAN_IDS: PlanId[] = ['basic', 'professional', 'enterprise']
 
-function DashboardContent() {
-  const searchParams = useSearchParams()
-  const planId = (searchParams.get('plan') as PlanId) || 'professional'
-  const plan = PLANS.find((p) => p.id === planId) ?? PLANS[1]
-  const maxLines = plan.lines === -1 ? 999 : plan.lines
+export default async function DashboardPage(props: {
+  searchParams?: Promise<{ plan?: string }> | { plan?: string }
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const history = getKpiHistory('line-1')
-  const linesKpis = getLinesKpis(maxLines)
-  const latest = history[history.length - 1]
-  const avgOee = linesKpis.length ? linesKpis.reduce((s, l) => s + l.oee, 0) / linesKpis.length : 0
+  if (!user) {
+    redirect('/login?redirect=/dashboard')
+  }
 
-  return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-700 bg-slate-900/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-sm text-slate-200 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" /> Inicio
-            </Link>
-            <span className="text-slate-500">|</span>
-            <span className="flex items-center gap-2 text-sm font-medium text-white">
-              <LayoutDashboard className="h-4 w-4 text-cyan-400" />
-              Dashboard — Plan {plan.name}
-            </span>
-          </div>
-          <span className="rounded bg-slate-700 px-2 py-1 text-xs text-slate-100">
-            {plan.lines === -1 ? 'Liñas ilimitadas' : `${linesKpis.length}/${plan.lines} liñas`}
-          </span>
-        </div>
-      </header>
+  const profileAndOrg = await ensureProfileAndOrg(user.id)
+  if (!profileAndOrg) {
+    redirect('/auth/complete-registration')
+  }
 
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        <h1 className="text-xl font-bold text-white">Eficiencia de producción</h1>
-        <p className="mt-1 text-sm text-slate-300">
-          OEE = Disponibilidad × Rendimiento × Calidad
-        </p>
+  const { organization } = profileAndOrg
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard
-            title="OEE"
-            value={latest?.oee ?? avgOee}
-            icon={Gauge}
-            subtitle="Eficiencia global"
-          />
-          <KpiCard
-            title="Disponibilidad"
-            value={latest?.disponibilidad ?? 0}
-            icon={Activity}
-            subtitle="Tiempo en marcha / planificado"
-          />
-          <KpiCard
-            title="Rendimiento"
-            value={latest?.rendimiento ?? 0}
-            icon={TrendingUp}
-            subtitle="Velocidad real vs teórica"
-          />
-          <KpiCard
-            title="Calidad"
-            value={latest?.calidad ?? 0}
-            icon={Award}
-            subtitle="Unidades buenas / total"
-          />
-        </section>
+  const rawParams = props.searchParams ?? {}
+  const searchParams = typeof (rawParams as Promise<{ plan?: string }>).then === 'function'
+    ? await (rawParams as Promise<{ plan?: string }>)
+    : (rawParams as { plan?: string })
+  const planParam = searchParams?.plan
+  if (planParam && VALID_PLAN_IDS.includes(planParam as PlanId)) {
+    await updateOrganizationPlan(organization.id, planParam as PlanId)
+    redirect('/dashboard')
+  }
+  const lines = await getLines(organization.id)
+  const lineIds = lines.map((l) => l.id)
 
-        <section className="mt-6">
-          <OeeChart data={history} title="Evolución de KPIs (últimos 14 días)" />
-        </section>
-
-        <section className="mt-6">
-          <LinesBarChart data={linesKpis} title="Comparativa por línea de producción" />
-        </section>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          Datos de demostración. Plan actual: {plan.name} — {plan.dashboard} · {plan.storage}
-        </p>
-      </main>
-    </div>
+  const kpiHistoryByLineAndShiftEntries = await Promise.all(
+    lines.flatMap((l) =>
+      ([1, 2, 3] as const).map(async (shift) => {
+        const raw = await getKpiHistoryForLine(l.id, 14, shift)
+        const history: KpiHistoryPoint[] = raw.map((s) => ({
+          date: s.date,
+          oee: Number(s.oee),
+          disponibilidad: Number(s.disponibilidad),
+          rendimiento: Number(s.rendimiento),
+          calidad: Number(s.calidad),
+        }))
+        return [`${l.id}-${shift}`, history] as const
+      })
+    )
   )
-}
+  const kpiHistoryByLineAndShift: Record<string, KpiHistoryPoint[]> = {}
+  kpiHistoryByLineAndShiftEntries.forEach(([key, history]) => { kpiHistoryByLineAndShift[key] = history })
 
-export default function DashboardPage() {
+  const latestKpisMap = await getLatestKpisForLines(lineIds)
+  const latestKpisByLineId: Record<string, { oee: number; disponibilidad: number; rendimiento: number; calidad: number }> = {}
+  latestKpisMap.forEach((v, k) => { latestKpisByLineId[k] = v })
+
+  const lineKpisFromMachinesEntries = await Promise.all(
+    lines.map(async (l) => [l.id, await getLineKpisFromEnabledMachines(l.id, l)] as const)
+  )
+  const lineKpisFromMachinesByLineId: Record<string, { oee: number; disponibilidad: number; rendimiento: number; calidad: number } | null> = {}
+  lineKpisFromMachinesEntries.forEach(([id, kpis]) => { lineKpisFromMachinesByLineId[id] = kpis })
+
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-slate-300">Cargando...</div>}>
-      <DashboardContent />
-    </Suspense>
+    <DashboardClient
+      planId={organization.plan_id as PlanId}
+      lines={lines}
+      organizationName={organization.name}
+      organizationCode={organization.organization_code}
+      isOwner={profileAndOrg.profile.role === 'owner'}
+      trialEndsAt={organization.trial_ends_at ?? undefined}
+      kpiHistoryByLineAndShift={kpiHistoryByLineAndShift}
+      latestKpisByLineId={latestKpisByLineId}
+      lineKpisFromMachinesByLineId={lineKpisFromMachinesByLineId}
+    />
   )
 }

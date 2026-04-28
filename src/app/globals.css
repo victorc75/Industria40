@@ -17,6 +17,54 @@ body {
   color: var(--text-primary);
 }
 
+@media print {
+  body * { visibility: hidden; }
+  .report-print-wrapper,
+  .report-print-wrapper * { visibility: visible; }
+  .report-print-wrapper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+  .report-print-content {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    background: white !important;
+    color: #111 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    padding: 1rem !important;
+  }
+  .report-print-content .text-white { color: #111 !important; }
+  .report-print-content .text-slate-200,
+  .report-print-content .text-slate-300,
+  .report-print-content .text-slate-400 { color: #333 !important; }
+  .report-print-content button { display: none !important; }
+  .report-print-content .recharts-wrapper { visibility: visible !important; }
+  .report-print-content .recharts-surface { visibility: visible !important; }
+  .report-print-charts { display: flex !important; flex-wrap: wrap !important; }
+  .report-print-chart-cell { min-height: 140px !important; }
+  .report-print-chart-cell .recharts-responsive-container { min-height: 120px !important; height: 120px !important; }
+  .report-print-content table { border-collapse: collapse !important; }
+  .report-print-content th,
+  .report-print-content td { border: 1px solid #333 !important; padding: 0.25rem 0.5rem !important; }
+  .report-print-content thead th { background: #e5e7eb !important; color: #111 !important; }
+}
+
 @layer utilities {
   .gradient-mesh {
     background:

@@ -1,56 +1,105 @@
 'use client'
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { LineKpi } from '@/lib/types'
+import { getKpiColor } from '@/lib/kpiColors'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { GaugeTicks } from '@/components/GaugeTicks'
 
 interface LinesBarChartProps {
   data: LineKpi[]
   title?: string
 }
 
+const KPI_KEYS: (keyof Pick<LineKpi, 'oee' | 'disponibilidad' | 'rendimiento' | 'calidad'>)[] = [
+  'oee',
+  'disponibilidad',
+  'rendimiento',
+  'calidad',
+]
+
 export function LinesBarChart({ data, title = 'OEE por línea' }: LinesBarChartProps) {
-  const chartData = data.map((d) => ({
-    nombre: d.lineName,
-    OEE: d.oee,
-    Disponibilidad: d.disponibilidad,
-    Rendimiento: d.rendimiento,
-    Calidad: d.calidad,
-  }))
+  const { t } = useLanguage()
+
+  const labels: Record<string, string> = {
+    oee: t('report.oee'),
+    disponibilidad: t('report.disponibilidad'),
+    rendimiento: t('report.rendimiento'),
+    calidad: t('report.calidad'),
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-700 bg-slate-800 p-4">
+        <h3 className="mb-4 text-sm font-semibold text-slate-100">{title}</h3>
+        <p className="text-sm text-slate-400">{t('dashboard.noLines')}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-xl border border-slate-700 bg-slate-800 p-4">
       <h3 className="mb-4 text-sm font-semibold text-slate-100">{title}</h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }} layout="vertical" barCategoryGap="12%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-            <XAxis type="number" stroke="#cbd5e1" fontSize={12} tick={{ fill: '#e2e8f0' }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-            <YAxis type="category" dataKey="nombre" stroke="#cbd5e1" fontSize={12} width={80} tick={{ fill: '#e2e8f0' }} tickLine={false} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#0f172a',
-                border: '1px solid #334155',
-                borderRadius: '8px',
-                color: '#e2e8f0',
-              }}
-              formatter={(value: number, name: string) => [`${value.toFixed(1)}%`, name]}
-            />
-            <Legend wrapperStyle={{ fontSize: '12px' }} formatter={(value) => <span className="text-slate-100">{value}</span>} />
-            <Bar dataKey="OEE" fill="#0ea5e9" radius={[0, 4, 4, 0]} name="OEE" />
-            <Bar dataKey="Disponibilidad" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="Disponibilidad" />
-            <Bar dataKey="Rendimiento" fill="#f59e0b" radius={[0, 4, 4, 0]} name="Rendimiento" />
-            <Bar dataKey="Calidad" fill="#10b981" radius={[0, 4, 4, 0]} name="Calidad" />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="space-y-6">
+        {data.map((line) => (
+          <div key={line.lineId} className="rounded-lg border border-slate-600 bg-slate-800/50 p-3">
+            <p className="mb-3 text-sm font-medium text-white">{line.lineName}</p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {KPI_KEYS.map((key) => {
+                const value = line[key] ?? 0
+                const rest = Math.max(0, 100 - value)
+                const color = getKpiColor(value)
+                const pieData = [
+                  { name: labels[key], value, fill: color },
+                  { name: 'Resto', value: rest, fill: '#334155' },
+                ]
+                return (
+                  <div key={key} className="flex flex-col items-center relative">
+                    <div className="relative w-full overflow-visible" style={{ height: 118 }}>
+                      <ResponsiveContainer width="100%" height={100}>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="65%"
+                            innerRadius={22}
+                            outerRadius={38}
+                            startAngle={225}
+                            endAngle={-45}
+                            paddingAngle={2}
+                            stroke="none"
+                          >
+                            <Cell fill={color} />
+                            <Cell fill="#334155" />
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#0f172a',
+                              border: '1px solid #334155',
+                              borderRadius: '8px',
+                              color: '#e2e8f0',
+                            }}
+                            formatter={(v: number) => [`${v.toFixed(1)}%`, '']}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <GaugeTicks outerRadius={38} cyPercent={0.65} chartHeight={100} />
+                    </div>
+                    <span className="text-xs text-slate-300">{labels[key]}</span>
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color }}
+                                    >
+                      {value.toFixed(1)}%
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

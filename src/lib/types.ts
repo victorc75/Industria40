@@ -12,6 +12,10 @@ export interface Plan {
   storage: string
   api?: string
   integrations?: string
+  /** Meses de proba gratuítos (só plan básico). Despois pide emigrar a pago. */
+  trialMonths?: number
+  /** Texto para o prezo (ex. "Gratis 1º mes") */
+  priceLabel?: string
 }
 
 export interface LineKpi {
@@ -36,13 +40,15 @@ export const PLANS: Plan[] = [
   {
     id: 'basic',
     name: 'Basic',
-    price: 199,
+    price: 0,
     currency: '€',
-    lines: 2,
+    lines: 1,
     dashboard: 'básico',
-    users: 1,
+    users: 5,
     support: 'Soporte por email',
     storage: '1 GB',
+    trialMonths: 1,
+    priceLabel: 'Gratis 1º mes',
   },
   {
     id: 'professional',
@@ -67,6 +73,6 @@ export const PLANS: Plan[] = [
     support: 'Soporte 24/7',
     storage: '100 GB',
     api: 'API completa',
-    integrations: 'Integracións personalizadas',
+    integrations: 'Integraciones personalizadas',
   },
 ]
