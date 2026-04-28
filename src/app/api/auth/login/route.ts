@@ -10,12 +10,13 @@ export async function POST(request: NextRequest) {
 
   if (!email || !password) {
     return NextResponse.redirect(
-      new URL('/login?error=' + encodeURIComponent('Email y contraseña requeridos'), request.url)
+      new URL('/login?error=' + encodeURIComponent('Email y contraseña requeridos'), request.url),
+      { status: 303 }
     )
   }
 
   const origin = request.nextUrl.origin
-  let response = NextResponse.redirect(new URL(next, origin))
+  let response = NextResponse.redirect(new URL(next, origin), { status: 303 })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       error.message === 'Invalid login credentials'
         ? 'Email o contraseña incorrectos.'
         : error.message
-    return NextResponse.redirect(new URL('/login?error=' + encodeURIComponent(msg), origin))
+    return NextResponse.redirect(new URL('/login?error=' + encodeURIComponent(msg), origin), { status: 303 })
   }
 
   return response
