@@ -99,6 +99,12 @@ function LoginFormInner() {
             {t('login.registerLink')}
           </Link>
         </p>
+        <p className="mt-8 text-center font-mono text-[10px] text-slate-600" title="Comprueba en GitHub que coincide con el último commit desplegado">
+          Build{' '}
+          {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA
+            ? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+            : 'local'}
+        </p>
       </div>
     </div>
   )
