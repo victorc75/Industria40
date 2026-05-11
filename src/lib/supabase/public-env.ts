@@ -1,6 +1,21 @@
-/** URL del proyecto (Settings → API / Connect). */
+/** Quita espacios y comillas típicas al pegar en Vercel. */
+function trimEnvValue(value: string | undefined): string | undefined {
+  if (value == null) return undefined
+  let v = value.trim()
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim()
+  }
+  return v || undefined
+}
+
+/** URL del proyecto (Settings → API / Connect). Sin barra final. */
 export function getSupabaseUrl(): string | undefined {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || undefined
+  const raw = trimEnvValue(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  if (!raw) return undefined
+  return raw.replace(/\/+$/, '')
 }
 
 /**
@@ -8,7 +23,11 @@ export function getSupabaseUrl(): string | undefined {
  * En Vercel puedes definir cualquiera de las dos variables.
  */
 export function getSupabasePublishableKey(): string | undefined {
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
-  const publishable = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+  const anon = trimEnvValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const publishable = trimEnvValue(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)
   return anon || publishable || undefined
+}
+
+export function looksLikeSupabaseClientKey(key: string): boolean {
+  return key.startsWith('eyJ') || key.startsWith('sb_publishable_')
 }

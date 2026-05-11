@@ -1,7 +1,42 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/public-env'
+import {
+  getSupabasePublishableKey,
+  getSupabaseUrl,
+  looksLikeSupabaseClientKey,
+} from '@/lib/supabase/public-env'
+
+/** Comprueba que la URL y la clave apunten al Auth API real (JSON), no a HTML (404, proxy, URL mal). */
+async function verifySupabaseAuthReachable(url: string, apiKey: string): Promise<string | null> {
+  const healthUrl = `${url}/auth/v1/health`
+  try {
+    const res = await fetch(healthUrl, {
+      headers: {
+        apikey: apiKey,
+        Authorization: `Bearer ${apiKey}`,
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(12000),
+    })
+    const text = await res.text()
+    const jsonLike = text.trimStart().startsWith('{')
+    if (!jsonLike) {
+      return (
+        `La URL de Supabase no responde como Auth API (HTTP ${res.status}). ` +
+        `Comprueba en Vercel que NEXT_PUBLIC_SUPABASE_URL sea exactamente la de tu proyecto ` +
+        `(https://…supabase.co en Supabase → Connect), sin barra al final ni texto extra, ` +
+        `y que NEXT_PUBLIC_SUPABASE_ANON_KEY sea la clave anon del mismo proyecto (API Keys → legacy anon). ` +
+        `En Vercel, las variables deben estar en el entorno Production y hace falta redeploy.`
+      )
+    }
+    return null
+  } catch {
+    return (
+      'No se alcanzó Supabase (timeout o error de red). Comprueba NEXT_PUBLIC_SUPABASE_URL y el estado del proyecto en el dashboard de Supabase.'
+    )
+  }
+}
 
 function loginErrorRedirect(origin: string, message: string) {
   return NextResponse.redirect(new URL('/login?error=' + encodeURIComponent(message), origin), { status: 303 })
@@ -51,8 +86,27 @@ export async function POST(request: NextRequest) {
   if (!supabaseUrl || !supabaseKey) {
     return loginErrorRedirect(
       origin,
-      'Faltan variables en Vercel: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.'
+      'Faltan variables en Vercel: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY (o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY). Actívalas en el entorno Production y haz redeploy.'
     )
+  }
+
+  if (!supabaseUrl.startsWith('https://')) {
+    return loginErrorRedirect(
+      origin,
+      'NEXT_PUBLIC_SUPABASE_URL debe empezar por https:// (copia la URL del proyecto desde Supabase → Connect).'
+    )
+  }
+
+  if (!looksLikeSupabaseClientKey(supabaseKey)) {
+    return loginErrorRedirect(
+      origin,
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY no tiene el formato esperado (debe ser un JWT que empiece por eyJ… o una clave sb_publishable_…). Revisa que no sea la service_role ni un valor corto erróneo.'
+    )
+  }
+
+  const probeError = await verifySupabaseAuthReachable(supabaseUrl, supabaseKey)
+  if (probeError) {
+    return loginErrorRedirect(origin, probeError)
   }
 
   let response = NextResponse.redirect(new URL(next, origin), { status: 303 })
