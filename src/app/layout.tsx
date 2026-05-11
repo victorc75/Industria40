@@ -10,6 +10,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans', preload: fals
 export const metadata: Metadata = {
   title: 'Industria40 | OEE y eficiencia de producción',
   description: 'SaaS para control de eficiencia de líneas de producción. OEE, Disponibilidad, Rendimiento y Calidad.',
+  icons: { icon: '/favicon.ico' },
 }
 
 // 1) layout.css: preload → stylesheet (evita aviso en consola).
