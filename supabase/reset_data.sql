@@ -1,8 +1,22 @@
--- Borrar todos os datos da aplicación para reiniciar dende cero.
--- Non borra usuarios de Supabase Auth (auth.users); só os datos das táboas public.
--- Executar con permisos de owner/service_role (p.ex. no SQL Editor do Supabase).
+-- =============================================================================
+-- Limpiar datos de la aplicación (y opcionalmente usuarios de Auth)
+-- =============================================================================
+-- Ejecutar en Supabase → SQL Editor, como usuario con permisos (rol postgres
+-- del proyecto, o la conexión por defecto del editor).
+--
+-- PASO 1 (recomendado): solo datos de negocio (organizaciones, líneas, KPIs…).
+--   No borra cuentas de login: los usuarios siguen existiendo en Auth pero
+--   sin organización ni datos en public.
+--
+-- PASO 2 (opcional): descomentar el bloque «AUTH» al final si también quieres
+--   eliminar usuarios de Autenticación (tendrán que registrarse de nuevo).
+--   Si alguna línea falla por «relation does not exist», bórrala y reintenta.
+--   Alternativa: Authentication → Users → eliminar desde el panel.
+-- =============================================================================
 
--- CASCADE permite truncar en calquera orde (trunca tamén as táboas que referencian estas).
+-- -----------------------------------------------------------------------------
+-- PASO 1: tablas public (CASCADE respeta FKs entre ellas)
+-- -----------------------------------------------------------------------------
 truncate table
   public.machine_state_periods,
   public.machine_daily_production,
@@ -18,9 +32,17 @@ truncate table
 restart identity
 cascade;
 
--- Opcional: borrar tamén os usuarios de Autenticación (Supabase Auth).
--- Se queres que os usuarios teñan que rexistrarse de novo, no Dashboard: Authentication > Users,
--- ou descomenta abaixo. Se falla por FK (p.ex. storage.objects), borra antes obxectos en Storage
--- ou usa o Dashboard para eliminar usuarios.
--- delete from auth.identities;
--- delete from auth.users;
+-- -----------------------------------------------------------------------------
+-- PASO 2 (opcional): vaciar Auth — descomenta el bloque siguiente.
+-- Orden: primero tablas hijas de auth.users. Si una tabla «no existe», quita esa línea.
+-- -----------------------------------------------------------------------------
+/*
+delete from auth.refresh_tokens;
+delete from auth.sessions;
+delete from auth.mfa_amr_claims;
+delete from auth.mfa_challenges;
+delete from auth.mfa_factors;
+delete from auth.one_time_tokens;
+delete from auth.identities;
+delete from auth.users;
+*/
