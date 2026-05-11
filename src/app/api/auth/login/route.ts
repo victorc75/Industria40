@@ -22,9 +22,10 @@ function mapAuthErrorForUser(message: string): string {
   }
   if (isSupabaseHtmlResponseError(message)) {
     return (
-      'No se pudo conectar con Supabase (la respuesta no era JSON). ' +
-      'En Vercel → Environment Variables, revisa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY; ' +
-      'deben coincidir con Supabase (Connect o Settings → API Keys). Tras cambiarlas, vuelve a desplegar.'
+      'No se pudo conectar con Supabase (el servidor devolvió HTML en lugar de JSON). ' +
+      '1) En Vercel, comprueba que NEXT_PUBLIC_SUPABASE_URL sea exactamente la del mismo proyecto (p. ej. https://xxxx.supabase.co en Supabase → Connect). ' +
+      '2) Si solo tienes clave sb_publishable_, prueba a añadir también la clave anon (JWT largo) en NEXT_PUBLIC_SUPABASE_ANON_KEY: Supabase → Project Settings → API Keys → pestaña «Legacy anon / service_role». ' +
+      '3) Redeploy tras guardar variables.'
     )
   }
   return message
