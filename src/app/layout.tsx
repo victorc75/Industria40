@@ -4,14 +4,16 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+// Sin <link rel="preload"> de la fuente: evita el aviso de Chrome "preloaded … was not used"
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans', preload: false })
 
 export const metadata: Metadata = {
   title: 'Industria40 | OEE y eficiencia de producción',
   description: 'SaaS para control de eficiencia de líneas de producción. OEE, Disponibilidad, Rendimiento y Calidad.',
 }
 
-// Convierte preload de layout.css en stylesheet para evitar el aviso "preloaded but not used"
+// 1) layout.css: preload → stylesheet (evita aviso en consola).
+// 2) Fuentes .woff2: quitar <link rel="preload" as="font">; la carga sigue vía @font-face del CSS de next/font.
 const usePreloadCssScript = `
 (function(){
   function apply() {
@@ -21,10 +23,22 @@ const usePreloadCssScript = `
         links[i].rel = 'stylesheet';
         if (!links[i].getAttribute('as')) links[i].setAttribute('as', 'style');
       }
+      var fonts = document.querySelectorAll('link[rel="preload"][as="font"][href*="/_next/static/media/"]');
+      for (var j = 0; j < fonts.length; j++) {
+        fonts[j].parentNode && fonts[j].parentNode.removeChild(fonts[j]);
+      }
     } catch (e) {}
   }
   apply();
   if (document.readyState !== 'complete') document.addEventListener('DOMContentLoaded', apply);
+  try {
+    var head = document.head;
+    if (head) {
+      var mo = new MutationObserver(apply);
+      mo.observe(head, { childList: true, subtree: true });
+      setTimeout(function() { mo.disconnect(); }, 8000);
+    }
+  } catch (e2) {}
 })();
 `
 
