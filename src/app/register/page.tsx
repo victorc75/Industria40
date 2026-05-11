@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft } from 'lucide-react'
-import { completeRegistration } from '@/app/auth/actions'
+import { runCompleteRegistrationRpc } from '@/lib/complete-registration-rpc'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 const PENDING_ORG_CODE = 'pending_org_code'
@@ -40,8 +40,14 @@ export default function RegisterPage() {
       return
     }
 
-    if (data?.user) {
-      const result = await completeRegistration(orgCode.trim(), orgName.trim() || null, createNew)
+    // Con sesión: el RPC debe ir con el JWT del navegador. El Server Action a menudo no ve aún las cookies.
+    if (data?.session) {
+      const result = await runCompleteRegistrationRpc(
+        supabase,
+        orgCode.trim(),
+        orgName.trim() || null,
+        createNew
+      )
       setLoading(false)
       if (result.ok) {
         router.push('/dashboard')
@@ -49,6 +55,19 @@ export default function RegisterPage() {
         return
       }
       setError(result.error)
+      return
+    }
+
+    // Usuario creado pero sin sesión (p. ej. Supabase exige confirmar el correo): guardar org pendiente
+    if (data?.user) {
+      setLoading(false)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(PENDING_ORG_CODE, orgCode.trim())
+        localStorage.setItem(PENDING_ORG_NAME, orgName.trim())
+        localStorage.setItem(PENDING_CREATE_NEW, createNew ? '1' : '0')
+      }
+      setSuccess(true)
+      router.refresh()
       return
     }
 
