@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/public-env'
 
 function loginErrorRedirect(origin: string, message: string) {
   return NextResponse.redirect(new URL('/login?error=' + encodeURIComponent(message), origin), { status: 303 })
@@ -22,8 +23,8 @@ function mapAuthErrorForUser(message: string): string {
   if (isSupabaseHtmlResponseError(message)) {
     return (
       'No se pudo conectar con Supabase (la respuesta no era JSON). ' +
-      'En Vercel → Settings → Environment Variables, revisa NEXT_PUBLIC_SUPABASE_URL (https://…supabase.co) y NEXT_PUBLIC_SUPABASE_ANON_KEY; ' +
-      'deben coincidir con Supabase → Settings → API. Tras cambiarlas, vuelve a desplegar.'
+      'En Vercel → Environment Variables, revisa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY; ' +
+      'deben coincidir con Supabase (Connect o Settings → API Keys). Tras cambiarlas, vuelve a desplegar.'
     )
   }
   return message
@@ -42,20 +43,20 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseKey = getSupabasePublishableKey()
   const origin = request.nextUrl.origin
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseKey) {
     return loginErrorRedirect(
       origin,
-      'Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY en el entorno de despliegue (Vercel).'
+      'Faltan variables en Vercel: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.'
     )
   }
 
   let response = NextResponse.redirect(new URL(next, origin), { status: 303 })
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll()
