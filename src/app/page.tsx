@@ -1,3 +1,6 @@
+/**
+ * Landing pública: cabecera y contenido (planes, CTA a login/dashboard).
+ */
 import { LandingHeader } from '@/components/LandingHeader'
 import { LandingContent } from '@/components/LandingContent'
 

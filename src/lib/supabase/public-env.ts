@@ -1,4 +1,11 @@
-/** Quita espacios y comillas típicas al pegar en Vercel. */
+/**
+ * Lectura normalizada de URL y clave pública de Supabase desde variables de entorno.
+ *
+ * Usado por cliente, servidor, middleware y login API para aceptar tanto la clave
+ * JWT `anon` legacy como `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (sb_publishable_*).
+ *
+ * `trimEnvValue`: quita espacios y comillas típicas al pegar en Vercel.
+ */
 function trimEnvValue(value: string | undefined): string | undefined {
   if (value == null) return undefined
   let v = value.trim()

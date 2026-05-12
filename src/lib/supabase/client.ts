@@ -1,3 +1,9 @@
+/**
+ * Cliente Supabase para el navegador (componentes `'use client'`).
+ *
+ * Usa cookies gestionadas por `@supabase/ssr`. Tras `signUp`/`signIn`, la sesión
+ * debe estar aquí antes de que un Server Action pueda leerla en el servidor.
+ */
 import { createBrowserClient } from '@supabase/ssr'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/public-env'
 

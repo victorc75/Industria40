@@ -1,14 +1,16 @@
-/**
- * Executa o cambio de turno en automático: obtén as liñas con auto_shift_change,
- * calcula o turno actual pola hora e, se cambia respecto a work_shift, garda e reinicia e actualiza work_shift.
- * Require SUPABASE_SERVICE_ROLE_KEY e CRON_SECRET.
- */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentShiftFromTime } from './getCurrentShiftFromTime'
 import type { Line } from '@/lib/db/types'
 import type { WorkShift } from '@/lib/db/types'
 
+/**
+ * Cron de cambio de turno automático (invocado desde `GET /api/cron/auto-shift`).
+ *
+ * Lee líneas con `auto_shift_change`, calcula el turno según hora y horarios
+ * configurados; si cambia respecto a `work_shift`, guarda/reinicia datos y
+ * actualiza el turno. Usa cliente admin (service_role). Ver `docs/FUNCIONAMIENTO.md` §7.
+ */
 const MACHINE_STATES = ['en_marcha', 'parada', 'falta_producto', 'emergencia', 'anomalia'] as const
 const LINE_STATES_REPORTED = ['Produccion', 'Descanso programado', 'Mantenimiento', 'Cambio formato'] as const
 

@@ -1,3 +1,9 @@
+/**
+ * Supabase en el middleware de Next.js.
+ *
+ * Crea un `createServerClient` con cookies de la petición/respuesta, llama a
+ * `auth.getUser()` para refrescar el JWT, y redirige según ruta pública vs dashboard.
+ */
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/public-env'

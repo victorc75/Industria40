@@ -1,3 +1,10 @@
+/**
+ * Login por formulario POST (email + contraseña).
+ *
+ * Crea sesión Supabase en cookies (303) o redirige a /login con mensaje de error.
+ * Incluye comprobación previa a `/auth/v1/health` y mensajes claros si la URL/clave
+ * en Vercel no coinciden con el proyecto Supabase.
+ */
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'

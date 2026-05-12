@@ -1,3 +1,10 @@
+/**
+ * Layout raíz de la aplicación (App Router).
+ *
+ * Define metadata, fuente Inter (`next/font`), estilos globales, `LanguageProvider`
+ * para i18n y un script `beforeInteractive` que mitiga avisos de preload en Chrome
+ * (CSS y fuentes). Todas las rutas se renderizan bajo este árbol.
+ */
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Inter } from 'next/font/google'

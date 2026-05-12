@@ -2,6 +2,8 @@
 
 Aplicación SaaS para controlar la eficiencia de las líneas de producción con KPIs: **OEE**, **Disponibilidad**, **Rendimiento** y **Calidad**.
 
+**Documentación técnica (arquitectura, auth, dashboard, cron, base de datos):** [docs/FUNCIONAMIENTO.md](docs/FUNCIONAMIENTO.md).
+
 ---
 
 ## Cómo iniciar la app (desde el principio)
@@ -15,9 +17,9 @@ Aplicación SaaS para controlar la eficiencia de las líneas de producción con 
 
 - Abre una **terminal** (PowerShell o CMD) y ve a la carpeta del proyecto:
   ```bash
-  cd ruta\donde\está\Industria40_2
+  cd ruta\al\clon\Industria40
   ```
-  Por ejemplo: `cd C:\Users\Victor\Documents\Proyectos\Industria40_2`
+  Por ejemplo: `cd C:\Users\vcosta\Documents\ProyectoDAM\Industria40`
 
 ### 3. Instalar dependencias
 
@@ -36,10 +38,11 @@ npm install
   NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
   NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anon
   ```
+  También puedes usar `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…`) en lugar de la anon; ver `.env.example`.
 
 - Para **cambio de turno automático** (opcional): añade `SUPABASE_SERVICE_ROLE_KEY` (Settings → API → service_role) y `CRON_SECRET` (un secreto que uses para llamar al endpoint de cron). Ver más abajo "Cambio de turno automático".
 
-- Dónde obtenerlos: en [Supabase](https://supabase.com/dashboard) → tu proyecto → **Settings** → **API** → **Project URL** y **anon public** key.
+- Dónde obtenerlos: en [Supabase](https://supabase.com/dashboard) → tu proyecto → **Settings** → **API Keys** / **Connect** → URL del proyecto y clave **anon** (JWT) o **publishable**.
 
 ### 5. Configurar Supabase (Auth y base de datos)
 
@@ -69,6 +72,11 @@ npm install
   14. `014_line_state_periods_and_snapshot.sql`
   15. `015_auto_shift_change.sql`
   16. `016_machine_kpi_snapshot.sql`
+  17. `017_kpi_snapshots_source.sql`
+  18. `018_line_default_parada.sql`
+  19. `019_machine_daily_production_rls_with_check.sql`
+  20. `020_kpi_snapshots_no_duplicates.sql`
+  21. `021_plan_basic_default_trial.sql`
 - Si algún archivo da error (por ejemplo “ya existe”), puedes omitirlo si ya lo ejecutaste antes.
 
 ### 6. Arrancar la app
@@ -160,11 +168,10 @@ Abre [http://localhost:3000](http://localhost:3000). Desde la landing puedes ir 
 ### Base de datos (Supabase)
 
 1. En el proyecto Supabase, abre **SQL Editor**.
-2. Crea una nueva query y pega el contenido de `supabase/migrations/001_initial_schema.sql`.
-3. Ejecuta la query (Run). Se crearán las tablas `organizations`, `profiles`, `lines` y las políticas RLS.
-4. Ejecuta también el contenido de `supabase/migrations/002_kpi_snapshots.sql` para crear la tabla `kpi_snapshots` (KPIs por línea y fecha).
-5. Al entrar por primera vez al dashboard, se crean automáticamente tu organización (plan Professional) y tu perfil, y dos líneas de ejemplo (Línea A, Línea B).
-6. En el dashboard puedes: **añadir, editar y eliminar líneas** (respetando el límite del plan), y **registrar KPIs del día**; los valores guardados se usan en las gráficas.
+2. Ejecuta **en orden** todos los ficheros de `supabase/migrations/` (lista numerada en la sección 5 de arriba).
+3. Tras las migraciones tendrás tablas `organizations`, `profiles`, `lines`, máquinas, KPIs, RPC de alta de organización, etc., y políticas **RLS**.
+4. **Alta de usuario y empresa:** no se crea la organización sola al entrar al dashboard. Hay que **registrarse** con código de organización: crear una nueva (eres *owner*) o unirse con el código de una existente. Ver [docs/FUNCIONAMIENTO.md](docs/FUNCIONAMIENTO.md) §4.
+5. En el dashboard: **líneas**, **KPIs**, gráficas, máquinas, turnos y (opcional) cron de cambio de turno.
 
 ---
 
@@ -172,13 +179,13 @@ Abre [http://localhost:3000](http://localhost:3000). Desde la landing puedes ir 
 
 ### Antes de empezar
 
-1. **Abre una terminal** en la carpeta del proyecto (`Industria40_2`).
+1. **Abre una terminal** en la carpeta del proyecto (`Industria40`).
 2. **Instala dependencias** (si no lo has hecho):
    ```bash
    npm install
    ```
 3. **Comprueba que tienes `.env.local`** con `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` (ver sección Autenticación arriba).
-4. **En Supabase**, en **SQL Editor**, ejecuta primero `001_initial_schema.sql` y luego `002_kpi_snapshots.sql` (ver sección Base de datos arriba).
+4. **En Supabase**, en **SQL Editor**, ejecuta todas las migraciones en orden (ver sección 5 arriba).
 
 ---
 
@@ -196,10 +203,10 @@ Abre [http://localhost:3000](http://localhost:3000). Desde la landing puedes ir 
 ### Probar login y dashboard
 
 1. En la página principal haz clic en **Iniciar sesión**.
-2. Si no tienes cuenta, haz clic en **Registrarse**, pon un email y contraseña (mínimo 6 caracteres) y pulsa **Registrarse**.
-   - Si en Supabase tienes "Confirm email" activado, revisa el correo y confirma antes de seguir.
-3. En **Iniciar sesión** introduce ese email y contraseña y pulsa **Entrar**.
-4. Deberías ir al **dashboard**. La primera vez se crean automáticamente tu organización y dos líneas: "Línea A" y "Línea B".
+2. Si no tienes cuenta, **Registrarse**: email, contraseña, **código de organización** (mín. 4 caracteres). Marca **Crear nueva organización** y pon nombre de empresa, o usa un código existente para unirte.
+   - Si en Supabase tienes "Confirm email" activado, revisa el correo; luego **Completar registro** si hace falta (`/auth/complete-registration`).
+3. **Iniciar sesión** con email y contraseña → **Entrar**.
+4. En el **dashboard** verás las líneas creadas por el RPC (p. ej. Línea A y B al crear organización nueva).
 
 ---
 
@@ -235,7 +242,7 @@ Abre [http://localhost:3000](http://localhost:3000). Desde la landing puedes ir 
 | Añadir / editar / borrar líneas | Dashboard → sección "Líneas de producción"   |
 | Guardar KPIs del día     | Dashboard → "Registrar KPIs de hoy" → Guardar      |
 
-Si algo falla, revisa: que `.env.local` esté bien, que las dos migraciones SQL se hayan ejecutado en Supabase y que la URL de redirect incluya `http://localhost:3000/auth/callback`.
+Si algo falla, revisa: `.env.local`, migraciones SQL completas, redirect `http://localhost:3000/auth/callback` y la guía [docs/FUNCIONAMIENTO.md](docs/FUNCIONAMIENTO.md).
 
 ## Stack
 

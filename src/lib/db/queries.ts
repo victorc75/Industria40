@@ -1,3 +1,18 @@
+/**
+ * Capa de acceso a datos (Supabase / Postgres).
+ *
+ * Todas las funciones son `async` y usan `createClient()` del **servidor** (cookies
+ * de sesión + RLS). Agrupación lógica:
+ *
+ * 1. Organización y perfil: `getProfile`, `getOrganization`, `ensureProfileAndOrg`, `updateOrganizationPlan`
+ * 2. Líneas: CRUD, plan/tasa, turno, horarios, auto-shift, estado de línea, borrados y resets
+ * 3. Máquinas: filas por línea, enabled, nombre, periodos de estado, estado actual
+ * 4. Tiempos por estado (línea/máquina) y snapshots para informes
+ * 5. Producción diaria y totales para reportes
+ * 6. KPIs: desde máquinas, snapshots, historial, últimos valores, búsqueda filtrada
+ *
+ * Detalle de flujos de producto: `docs/FUNCIONAMIENTO.md`.
+ */
 import { createClient } from '@/lib/supabase/server'
 import type {
   Organization,

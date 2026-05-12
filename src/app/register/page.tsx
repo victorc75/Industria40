@@ -8,6 +8,11 @@ import { ArrowLeft } from 'lucide-react'
 import { runCompleteRegistrationRpc } from '@/lib/complete-registration-rpc'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
+/**
+ * Registro: `signUp` en cliente; si hay sesión inmediata, RPC de organización en el
+ * mismo cliente (evita desfase de cookies con Server Actions). Sin sesión (confirmación
+ * email), guarda datos de org en `localStorage` y muestra flujo de verificación.
+ */
 const PENDING_ORG_CODE = 'pending_org_code'
 const PENDING_ORG_NAME = 'pending_org_name'
 const PENDING_CREATE_NEW = 'pending_create_new'

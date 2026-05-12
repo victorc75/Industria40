@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { Locale } from '@/lib/i18n/translations'
 import { t as tFn } from '@/lib/i18n/translations'
 
+/** Idioma de la UI (es/gl/en), persistido en `localStorage` y función `t(key)`. */
 const STORAGE_KEY = 'industria40-locale'
 
 const defaultLocale: Locale = 'es'

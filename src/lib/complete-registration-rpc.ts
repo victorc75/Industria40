@@ -1,5 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Lógica compartida de RPC Postgres para alta de organización o unión por código.
+ *
+ * Ejecutable con cualquier `SupabaseClient` que lleve JWT de usuario (browser
+ * tras signUp, o servidor tras getUser). Los RPC son `SECURITY DEFINER` y usan
+ * `auth.uid()` en la base de datos.
+ */
 export type CompleteRegistrationResult = { ok: true } | { ok: false; error: string }
 
 /**

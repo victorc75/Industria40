@@ -13,6 +13,7 @@ import type { Line } from '@/lib/db/types'
 import type { KpiHistoryPoint } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
+/** Vista interactiva del dashboard: recibe datos ya cargados en `dashboard/page.tsx` (servidor). */
 type WorkShift = 1 | 2 | 3
 
 function getWorkShiftLabels(t: (k: string) => string): Record<WorkShift, string> {

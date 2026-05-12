@@ -1,3 +1,10 @@
+/**
+ * Cliente Supabase para Server Components, Server Actions y Route Handlers.
+ *
+ * Lee/escribe cookies de sesión vía `next/headers`. Si `setAll` falla (p. ej.
+ * llamada desde un Server Component sin mutable cookies), el middleware puede
+ * volver a sincronizar la sesión en la siguiente petición.
+ */
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/public-env'

@@ -1,5 +1,13 @@
 'use server'
 
+/**
+ * Server Actions del dashboard: mutaciones desde componentes cliente.
+ *
+ * Patrón: `getUser` → `ensureProfileAndOrg` → comprobar plan/trial → llamar a
+ * `lib/db/queries` → `revalidatePath`. Respuestas `{ ok, error? }` para la UI.
+ *
+ * Ver `docs/FUNCIONAMIENTO.md` §5.
+ */
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import {

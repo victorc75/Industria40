@@ -1,5 +1,13 @@
 'use server'
 
+/**
+ * Acciones de servidor relacionadas con el registro post-login.
+ *
+ * `completeRegistration`: requiere sesión en cookies (p. ej. página
+ * `/auth/complete-registration`). La creación justo tras `signUp` en el
+ * navegador usa `runCompleteRegistrationRpc` con el cliente browser — ver
+ * `register/page.tsx` y `docs/FUNCIONAMIENTO.md` §4.
+ */
 import { createClient } from '@/lib/supabase/server'
 import {
   runCompleteRegistrationRpc,

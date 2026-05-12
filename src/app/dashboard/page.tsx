@@ -5,6 +5,13 @@ import { DashboardClient } from '@/components/DashboardClient'
 import type { PlanId } from '@/lib/types'
 import type { KpiHistoryPoint } from '@/lib/types'
 
+/**
+ * Página principal del panel (Server Component).
+ *
+ * Comprueba sesión y perfil+organización, aplica `?plan=` si es válido, carga
+ * líneas e historiales de KPIs en paralelo y delega la UI interactiva en
+ * `DashboardClient`. Ver `docs/FUNCIONAMIENTO.md` §5.
+ */
 const VALID_PLAN_IDS: PlanId[] = ['basic', 'professional', 'enterprise']
 
 export default async function DashboardPage(props: {

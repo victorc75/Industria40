@@ -1,3 +1,7 @@
+/**
+ * OAuth / magic link: intercambia el `code` de la URL por sesión Supabase y redirige.
+ * Las URLs permitidas deben estar en Supabase → Authentication → URL Configuration.
+ */
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
