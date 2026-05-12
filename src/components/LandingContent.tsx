@@ -31,9 +31,9 @@ export function LandingContent() {
     <main>
       <section className="border-b border-slate-800/50 px-4 py-20 md:py-28">
         <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
+          <h1 className="text-balance text-center text-4xl font-bold tracking-tight text-white md:text-5xl">
             {t('landing.hero.title')}
-            <span className="text-cyan-400">{t('landing.hero.titleHighlight')}</span>
+            <span className="whitespace-nowrap text-cyan-400">{t('landing.hero.titleHighlight')}</span>
           </h1>
           <p className="mt-4 text-lg text-slate-300">
             {t('landing.hero.subtitle')}
